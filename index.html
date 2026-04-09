@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Winter 2026 Course Tier List</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -228,6 +229,14 @@
 
   .btn-copy:hover { background: #2c2c35; }
 
+  .btn-share {
+    background: var(--s-bg);
+    color: var(--s);
+    border-color: rgba(255,87,87,0.25);
+  }
+
+  .btn-share:hover { background: rgba(255,87,87,0.25); }
+
   .toast {
     position: fixed;
     bottom: 28px;
@@ -268,6 +277,7 @@
   <div class="controls">
     <button class="btn-reset" onclick="reset()">Reset</button>
     <button class="btn-copy" onclick="copyResult()">Copy results</button>
+    <button class="btn-share" onclick="shareAsPng()">Share as image</button>
   </div>
 
 </div>
@@ -361,11 +371,35 @@ function copyResult() {
   const unranked = [...pool.querySelectorAll('.card')].map(c => c.querySelector('.card-title').textContent);
   if (unranked.length) text += `Unranked: ${unranked.join(', ')}\n`;
 
-  navigator.clipboard.writeText(text).then(() => {
-    const toast = document.getElementById('toast');
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 2000);
+  navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard!'));
+}
+
+async function shareAsPng() {
+  const container = document.querySelector('.container');
+  const canvas = await html2canvas(container, {
+    backgroundColor: '#111114',
+    scale: 2,
   });
+  canvas.toBlob(async blob => {
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      showToast('Image copied to clipboard!');
+    } catch {
+      // Fallback: download the image
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'tier-list.png';
+      a.click();
+      showToast('Image downloaded!');
+    }
+  }, 'image/png');
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
 }
 
 reset();
